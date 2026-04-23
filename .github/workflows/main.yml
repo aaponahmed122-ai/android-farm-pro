@@ -5,22 +5,32 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup System Modules
+        run: |
+          # অ্যান্ড্রয়েড চালানোর জন্য প্রয়োজনীয় লিনাক্স মডিউল লোড করা
+          sudo modprobe binder_linux devices="binder,hwbinder,vndbinder"
+          sudo modprobe ashmem_linux
+          echo "System modules loaded."
+
       - name: Launching Android Engine
         run: |
-          # অ্যান্ড্রয়েড কন্টেইনার চালু (ক্যাপকাট অপ্টিমাইজড)
+          # অ্যান্ড্রয়েড কন্টেইনার চালু করা (সহজ কমান্ড)
           sudo docker run -itd --rm --privileged \
             --name=android-01 \
             -p 5555:5555 \
             redroid/redroid:11.0.0-latest \
-            androidboot.redroid_fps=30 \
-            androidboot.redroid_gpu_mode=guest
-          
-          # স্ক্রিন স্ট্রিমার চালু
+            androidboot.redroid_gpu_mode=guest \
+            androidboot.redroid_fps=30
+
+      - name: Launching Screen Streamer
+        run: |
+          # ফোন স্ক্রিন দেখার জন্য স্ট্রিমার চালু করা
           sudo docker run -itd --rm \
             --name=streamer \
             --link android-01:listened_device \
             -p 8000:8000 \
             sandm/ws-scrcpy
+          echo "Streamer is running on port 8000"
 
       - name: Setup Stable Connection
         run: |
@@ -32,5 +42,5 @@ jobs:
           echo "লিঙ্কটি নিচে তৈরি হচ্ছে, ৩০ সেকেন্ড অপেক্ষা করো..."
           echo "------------------------------------------"
           
-          # টানেল রান (এটি টানা ৬ ঘণ্টা চলবে)
+          # টানেল রান করা
           sudo cloudflared tunnel --url http://localhost:8000
