@@ -1,0 +1,36 @@
+name: CapCut Farm Engine
+on: workflow_dispatch
+
+jobs:
+  run-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Launching Android Engine
+        run: |
+          # অ্যান্ড্রয়েড কন্টেইনার চালু (ক্যাপকাট অপ্টিমাইজড)
+          sudo docker run -itd --rm --privileged \
+            --name=android-01 \
+            -p 5555:5555 \
+            redroid/redroid:11.0.0-latest \
+            androidboot.redroid_fps=30 \
+            androidboot.redroid_gpu_mode=guest
+          
+          # স্ক্রিন স্ট্রিমার চালু
+          sudo docker run -itd --rm \
+            --name=streamer \
+            --link android-01:listened_device \
+            -p 8000:8000 \
+            sandm/ws-scrcpy
+
+      - name: Setup Stable Connection
+        run: |
+          # ক্লাউডফ্লেয়ার ইনস্টল
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+          
+          echo "------------------------------------------"
+          echo "লিঙ্কটি নিচে তৈরি হচ্ছে, ৩০ সেকেন্ড অপেক্ষা করো..."
+          echo "------------------------------------------"
+          
+          # টানেল রান (এটি টানা ৬ ঘণ্টা চলবে)
+          sudo cloudflared tunnel --url http://localhost:8000
