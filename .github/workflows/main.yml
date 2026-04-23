@@ -1,46 +1,30 @@
-name: CapCut Farm Engine
+name: CapCut Farm Final
 on: workflow_dispatch
 
 jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup System Modules
+      - name: Start Android Emulator (Budtmo)
         run: |
-          # অ্যান্ড্রয়েড চালানোর জন্য প্রয়োজনীয় লিনাক্স মডিউল লোড করা
-          sudo modprobe binder_linux devices="binder,hwbinder,vndbinder"
-          sudo modprobe ashmem_linux
-          echo "System modules loaded."
+          # অ্যান্ড্রয়েড ৯.০ ইমেজে এটি সবচেয়ে হালকা এবং ফাস্ট চলবে
+          sudo docker run -d -p 6080:6080 \
+            -e EMULATOR_DEVICE="Samsung Galaxy S10" \
+            -e WEB_VNC=true \
+            --name android-container \
+            budtmo/docker-android-x86-9.0
+          echo "Emulator is starting, please wait..."
 
-      - name: Launching Android Engine
-        run: |
-          # অ্যান্ড্রয়েড কন্টেইনার চালু করা (সহজ কমান্ড)
-          sudo docker run -itd --rm --privileged \
-            --name=android-01 \
-            -p 5555:5555 \
-            redroid/redroid:11.0.0-latest \
-            androidboot.redroid_gpu_mode=guest \
-            androidboot.redroid_fps=30
-
-      - name: Launching Screen Streamer
-        run: |
-          # ফোন স্ক্রিন দেখার জন্য স্ট্রিমার চালু করা
-          sudo docker run -itd --rm \
-            --name=streamer \
-            --link android-01:listened_device \
-            -p 8000:8000 \
-            sandm/ws-scrcpy
-          echo "Streamer is running on port 8000"
-
-      - name: Setup Stable Connection
+      - name: Setup Connection
         run: |
           # ক্লাউডফ্লেয়ার ইনস্টল
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
           
           echo "------------------------------------------"
-          echo "লিঙ্কটি নিচে তৈরি হচ্ছে, ৩০ সেকেন্ড অপেক্ষা করো..."
+          echo "আপনার ফোন স্ক্রিন লিঙ্কটি নিচে তৈরি হচ্ছে..."
+          echo "লিঙ্কটি আসার পর ব্রাউজারে ওপেন করুন।"
           echo "------------------------------------------"
           
-          # টানেল রান করা
-          sudo cloudflared tunnel --url http://localhost:8000
+          # টানেল রান করা (পোর্ট ৬০৮০ তে VNC স্ক্রিন থাকে)
+          sudo cloudflared tunnel --url http://localhost:6080
