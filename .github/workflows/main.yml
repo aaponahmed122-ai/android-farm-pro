@@ -5,17 +5,27 @@ jobs:
   run-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Start Android Emulator (Budtmo)
+      - name: Free Disk Space
         run: |
-          # অ্যান্ড্রয়েড ৯.০ ইমেজে এটি সবচেয়ে হালকা এবং ফাস্ট চলবে
+          # ইমেজ ডাউনলোড করার জন্য জায়গা খালি করা
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Start Android Emulator
+        run: |
+          # সঠিক ইমেজ নাম: budtmo/docker-android:emulator_9.0
+          # এটি গিটহাবে সাপোর্ট করে এমন একটি হালকা ভার্সন
           sudo docker run -d -p 6080:6080 \
             -e EMULATOR_DEVICE="Samsung Galaxy S10" \
             -e WEB_VNC=true \
+            --privileged \
             --name android-container \
-            budtmo/docker-android-x86-9.0
-          echo "Emulator is starting, please wait..."
+            budtmo/docker-android:emulator_9.0
+          echo "অ্যান্ড্রয়েড ইঞ্জিন চালু হচ্ছে, ১ মিনিট অপেক্ষা করো..."
 
-      - name: Setup Connection
+      - name: Setup Stable Connection
         run: |
           # ক্লাউডফ্লেয়ার ইনস্টল
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
@@ -26,5 +36,5 @@ jobs:
           echo "লিঙ্কটি আসার পর ব্রাউজারে ওপেন করুন।"
           echo "------------------------------------------"
           
-          # টানেল রান করা (পোর্ট ৬০৮০ তে VNC স্ক্রিন থাকে)
+          # টানেল রান করা (পোর্ট ৬০৮০)
           sudo cloudflared tunnel --url http://localhost:6080
