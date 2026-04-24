@@ -1,0 +1,36 @@
+name: CapCut Farm High-Speed
+on: workflow_dispatch
+
+jobs:
+  run-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+
+      - name: Start High-Speed Android
+        run: |
+          # রেজোলিউশন 480x854 করা হয়েছে এবং ফ্রেমরেট লিমিট করা হয়েছে ল্যাগ কমাতে
+          sudo docker run -d -p 6080:6080 \
+            -e EMULATOR_DEVICE="Samsung Galaxy S10" \
+            -e WEB_VNC=true \
+            -e SCREEN_WIDTH=480 \
+            -e SCREEN_HEIGHT=854 \
+            -e SCREEN_DEPTH=16 \
+            --privileged \
+            --name android-container \
+            budtmo/docker-android:emulator_9.0
+          echo "High-Speed Emulator is starting..."
+
+      - name: Setup Fast Connection
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+          
+          echo "------------------------------------------"
+          echo "আপনার হাই-স্পিড লিঙ্কটি নিচে তৈরি হচ্ছে..."
+          echo "------------------------------------------"
+          
+          # ক্লাউডফ্লেয়ার টানেল (পোর্ট ৬০৮০)
+          sudo cloudflared tunnel --url http://localhost:6080
